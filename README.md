@@ -12,6 +12,7 @@ pip install -r requirements.txt
 **2. Configure Environment Create a .env file in the root directory:**
 
 SOJI_API_KEY=your_api_key_here
+
 SOJI_BASE_URL=[https://llm.soji.ai/v1](https://llm.soji.ai/v1)
 
 **3. Required EASA Document** 
