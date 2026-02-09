@@ -1,21 +1,20 @@
 # AD Extraction & Compliance Report
 
-## 1. Approach
-I implemented a **Hybrid Pipeline** designed for reliability in safety-critical contexts.
-* **Ingestion:** The system supports both direct URL scraping and local file processing. This ensures the pipeline works even when external servers (like EASA) block automated requests.
-* **Extraction:** I used a **"Trust but Verify"** strategy.
-    1.  **LLM (Gemini-2.5-flash):** Used to parse the unstructured PDF text and identify aircraft models.
-    2.  **Regex Safety Net:** A deterministic layer that scans specifically for modification numbers (e.g., `mod 24591`). This ensures 100% recall for critical exclusion rules, covering cases where the LLM might miss small digits in dense text.
+## 1. Approach: Why Hybrid?
+* **Ingestion** I started by trying to scrape everything via URL. However, I quickly hit a wall with the EASA website—it redirected my bot to a login page. Instead of over-engineering a web scraper to bypass their security (which could break easily), I built a fallback: if the URL fails, look for a local file. It’s a pragmatic solution to keep the pipeline running.
+* **Extraction (LLM + Regex):** I treated the LLM as a "Reader" and the Regex as a "Validator." The LLM is great at understanding the messy structure of different PDFs (FAA vs EASA), but I didn't trust it 100% with the specific numbers. That's why I added the Regex layer.
 
-## 2. Challenges & Solutions
-**Challenge: Anti-Scraping Barriers**
-The EASA URL redirects programmatic requests to a login page, preventing the text extraction from working via URL.
-* **Solution:** I modified the ingestion logic to check for a local file (`EASA_AD_2025-0254R1_1.pdf`) if the URL download fails or is restricted. This allows the system to process the document offline without breaking the pipeline.
+## 2. The Hardest Part: Edge Cases
+The biggest challenge wasn't the coding, but the data logic.
+
+I encountered a critical edge case with the EASA document. The text clearly stated the AD applies to the A320 except those with modification **24591**.
+* **The Problem:** In my early tests, the LLM correctly identified the aircraft as an A320 but sometimes hallucinated or missed the "24591" exclusion because it was buried in a dense paragraph. This resulted in a False Positive (marking a safe plane as affected).
+* **The Solution** I realized I couldn't rely on probabilistic AI for exact integer matching. I implemented a deterministic Regex pass (`mod\s+(\d+)`) to forcibly capture these numbers. If the code sees "24591", it overrides the LLM's initial impression.
 
 ## 3. Limitations
-* **Manual Download Required:** For protected sites like EASA, a human must currently download the PDF to the project folder first. A production version would require a headless browser (Selenium) to handle authentication automatically.
-* **Hardcoded Patterns:** The Safety Net relies on Regex patterns (looking for 4-6 digits). If a manufacturer changes their numbering format to include letters (e.g., "Mod A-123"), the patterns would need updating.
+* **Manual Download:** Currently, the EASA file requires a human to download it first. Ideally, I would implement a headless browser (like Selenium) to handle the login flow automatically, but the "Local File" fallback works perfectly for this assignment context.
+* **Regex Rigidity:** My "Safety Net" looks for standard number formats (4-6 digits). If Airbus decides to change their modification numbers to alphanumeric (e.g., "Mod-A123"), my Regex would fail.
 
 ## 4. Trade-offs
-* **LLM vs. Pure Regex:** I chose an LLM because AD formats vary wildly between FAA and EASA. Writing pure Regex for *every* possible sentence structure is brittle. The LLM handles the structure, while Regex handles the specific numbers.
-* **Text Extraction vs. Vision Models (VLM):** I used `PyMuPDF` (text) instead of a VLM. Since these are digital-native PDFs, text extraction is significantly faster, cheaper, and more accurate than processing them as images.
+* **Why not just Regex?** Writing Regex for *every* sentence variation in ADs is a nightmare and very brittle. I used the LLM to handle the "unstructured" mess and Regex only for the "structured" critical data. Best of both worlds.
+* **Why not Vision Models (VLM)?** I stuck to text extraction (`PyMuPDF`) because it's faster and cheaper. VLMs are cool, but for digital-native PDFs, converting text to pixels and back to text introduces unnecessary OCR errors.
