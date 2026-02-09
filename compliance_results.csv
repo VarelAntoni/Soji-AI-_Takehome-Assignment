@@ -1,0 +1,9 @@
+Model,MSN,Mods,FAA Result,EASA Result
+MD-11F,48400,None,✅ Affected,❌ Not applicable
+A320-214,4500,mod 24591 (production),❌ Not applicable,❌ Not affected
+A320-214,4500,None,❌ Not applicable,✅ Affected
+MD-11,48123,None,✅ Affected,❌ Not applicable
+DC-10-30F,47890,None,✅ Affected,❌ Not applicable
+Boeing 737-800,30123,None,❌ Not applicable,❌ Not applicable
+A320-232,6789,mod 24591 (production),❌ Not applicable,❌ Not affected
+A321-112,364,mod 24977 (production),❌ Not applicable,❌ Not affected
