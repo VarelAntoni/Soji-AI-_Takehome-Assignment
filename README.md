@@ -19,4 +19,5 @@ SOJI_BASE_URL=[https://llm.soji.ai/v1](https://llm.soji.ai/v1)
 Due to EASA website restrictions, you must ensure the file EASA_AD_2025-0254R1_1.pdf is present in this root directory. The script will read it locally.
 
 **4. Execute the main script:**
+
 python main.py
